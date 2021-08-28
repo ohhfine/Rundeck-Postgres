@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:latest
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - APP_DB_USER=rundeck
+      - APP_DB_PASS=admin
+      - APP_DB_NAME=rundeck
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+ 
+  rundeck:
+    image: rundeck/rundeck:SNAPSHOT
+    ports:
+      - 4440:4440
+    volumes:
+      - ./server/logs:/opt/rundeck/logs
+    restart: always
+    environment:
+      - RUNDECK_DATABASE_DRIVER=org.postgresql.Driver
+      - RUNDECK_DATABASE_USERNAME=rundeck
+      - RUNDECK_DATABASE_PASSWORD=admin
+      - RUNDECK_DATABASE_URL=jdbc:postgresql://<your servername here>/rundeck
+      - RUNDECK_LOGGING_AUDIT_ENABLED=true
+      - RUNDECK_LOGGING_STRATEGY=FILE
+      - RUNDECK_GRAILS_URL=http://<your servername here>:4440      
